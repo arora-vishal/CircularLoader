@@ -12,7 +12,6 @@ import android.support.v4.content.res.ResourcesCompat;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
-import android.view.animation.LinearInterpolator;
 
 /**
  * Created by vishalarora on 04/11/17.
@@ -23,8 +22,8 @@ public class SubscriptionLoader extends View {
     private static final String TAG = SubscriptionLoader.class.getSimpleName();
     Paint arcPaint;
     Drawable srcDrawable;
-    float startArcAngle = 0;
-    float endArcAngle = 360;
+    float startArcAngle = 95;
+    float endArcAngle = 130;
 
     int arcMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getResources().getDisplayMetrics());
     int arcStrokeWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
@@ -60,22 +59,33 @@ public class SubscriptionLoader extends View {
         startAnimation();
     }
 
-    ValueAnimator animator = ValueAnimator.ofFloat(-180, 180);
+    ValueAnimator animator = ValueAnimator.ofFloat(0, 90);
 
     float rotateAngle = 0;
+    boolean goForward = true;
 
     private void startAnimation() {
-        animator.setDuration(800);
-        animator.setRepeatMode(ValueAnimator.REVERSE);
-        animator.setRepeatCount(ValueAnimator.INFINITE);
-        animator.setInterpolator(new LinearInterpolator());
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            public void onAnimationUpdate(ValueAnimator animation) {
-                rotateAngle = (float) animation.getAnimatedValue();
-                invalidate();
+        if (startArcAngle == 360) {
+            endArcAngle = endArcAngle % 360;
+            startArcAngle = startArcAngle % 360;
+        }
+
+        if (goForward) {
+            if ((endArcAngle - startArcAngle) >= 160) {
+                goForward = false;
+            } else {
+                endArcAngle += 8;
+                startArcAngle += 3;
             }
-        });
-        animator.start();
+        } else {
+            if ((endArcAngle - startArcAngle) <= 40) {
+                goForward = true;
+            } else {
+                endArcAngle += 3;
+                startArcAngle += 8;
+            }
+        }
+        invalidate();
     }
 
     private void stopAnimation() {
@@ -105,12 +115,10 @@ public class SubscriptionLoader extends View {
         super.onDraw(canvas);
 
         // draw the outer arc
-        canvas.drawArc(rect, startArcAngle, endArcAngle, false, arcPaint);
+        canvas.drawArc(rect, startArcAngle, endArcAngle - startArcAngle , false, arcPaint);
 
         // set the bounds to canvas bounds
         srcDrawable.setBounds(0, 0, drawableWidth, drawableHeight);
-
-        canvas.scale(rotateAngle / 180, 1, drawableCenterX, drawableCenterY);
 
         // translate the canvas to draw the drawable on canvas
         canvas.translate(drawableLeft, drawableTop);
@@ -118,6 +126,7 @@ public class SubscriptionLoader extends View {
         // draw the drawable on the canvas
         srcDrawable.draw(canvas);
 
+        startAnimation();
     }
 
 
